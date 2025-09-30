@@ -5,17 +5,16 @@ generator client {
     provider = "prisma-client-js"
 }
 
+// prisma/schema.prisma
+
 datasource db {
-    provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+    provider  = "postgresql"
+    url       = env("PRISMA_DATABASE_URL") // For Prisma Accelerate
+    directUrl = env("POSTGRES_URL")      // For migrations
 }
 
 model Post {
-    id        Int      @id @default(autoincrement())
+    id        String   @id @default(cuid()) // Changed from Int to String for consistency
     name      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -25,6 +24,7 @@ model Post {
 
     @@index([name])
 }
+
 
 // Necessary for Next auth
 model Account {

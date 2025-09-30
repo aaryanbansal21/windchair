@@ -7,11 +7,7 @@ import { createCallerFactory, createTRPCRouter, publicProcedure } from "~/server
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  // A temporary health check endpoint to ensure the router is not empty
-  // during the initial deployment.
-  health: publicProcedure.query(() => {
-    return "ok";
-  }),
+  post: postRouter,
 });
 
 // export type definition of API
