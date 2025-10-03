@@ -1,7 +1,10 @@
-import { auth, signIn, signOut } from "~/server/auth";
+"use client";
 
-export async function AuthShowcase() {
-  const session = await auth();
+import { signIn, signOut } from "next-auth/react";
+import { api } from "~/trpc/react";
+
+export function AuthShowcase() {
+  const { data: session } = api.auth.getSession.useQuery();
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
@@ -9,16 +12,18 @@ export async function AuthShowcase() {
         {session && <span>Logged in as {session.user?.name}</span>}
       </p>
 
-      <form
-        action={async () => {
-          "use server";
-          await (session ? signOut() : signIn("google"));
+      <button 
+        onClick={() => {
+          if (session) {
+            signOut({ callbackUrl: "/" });
+          } else {
+            signIn("google", { callbackUrl: "/" });
+          }
         }}
+        className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
       >
-        <button className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20">
-          {session ? "Sign out" : "Sign in with Google"}
-        </button>
-      </form>
+        {session ? "Sign out" : "Sign in with Google"}
+      </button>
     </div>
   );
 }
