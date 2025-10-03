@@ -16,7 +16,7 @@ export function AuthShowcase() {
     const timer = setTimeout(() => {
       if (!session && !isLoading) {
         console.log("Refreshing session...");
-        refetch();
+        void refetch();
       }
     }, 1000);
     return () => clearTimeout(timer);
@@ -70,7 +70,7 @@ export function AuthShowcase() {
             <button 
               onClick={() => {
                 console.log("Manual session refresh...");
-                refetch();
+                void refetch();
               }}
               className="rounded-full bg-blue-500/20 px-6 py-2 text-sm font-semibold no-underline transition hover:bg-blue-500/30"
             >

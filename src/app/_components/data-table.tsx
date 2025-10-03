@@ -4,13 +4,26 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { EditableCell } from "~/app/_components/editable-cell";
 
-type ColumnMeta = { id: string; name: string; type: string };
+type ColumnMeta = { 
+  id: string; 
+  name: string; 
+  type: string; 
+  createdAt: Date; 
+  updatedAt: Date; 
+  tableId: string; 
+};
 
 type TableData = {
-  id: string;
-  name: string;
-  columns: ColumnMeta[];
-  rows: Record<string, unknown>[];
+  id?: string;
+  name?: string;
+  columns?: ColumnMeta[];
+  rows: Array<{
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    tableId: string;
+    data: any;
+  }>;
 };
 
 type DataTableProps = {
@@ -43,7 +56,7 @@ export function DataTable({ initialData }: DataTableProps) {
         </div>
         
         {/* Data columns - Light gray background */}
-        {table.columns.map((col) => (
+        {table.columns?.map((col) => (
           <div key={col.id} className="min-w-[200px] border-r border-gray-300 bg-gray-100">
             <div className="flex items-center px-3 py-2 h-10">
               <div className="flex items-center space-x-2">
@@ -61,8 +74,8 @@ export function DataTable({ initialData }: DataTableProps) {
           <button
             className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
             onClick={async () => {
-              const name = `Field ${table.columns.length + 1}`;
-              await addColumn.mutateAsync({ tableId: table.id, columnName: name, columnType: "text" });
+              const name = `Field ${(table.columns?.length ?? 0) + 1}`;
+              await addColumn.mutateAsync({ tableId: table.id!, columnName: name, columnType: "text" });
               await utils.table.getOrCreateDefaultTable.invalidate();
             }}
           >
@@ -81,17 +94,17 @@ export function DataTable({ initialData }: DataTableProps) {
             </div>
             
             {/* Data cells - White background */}
-            {table.columns.map((col) => (
+            {table.columns?.map((col) => (
               <div key={col.id} className="min-w-[200px] border-r border-gray-200 bg-white">
                 <div className="px-3 py-2 h-10 flex items-center">
                   <EditableCell
-                    tableId={table.id}
+                    tableId={table.id!}
                     rowIndex={rowIndex}
                     columnId={col.id}
-                    value={row[col.id] as any}
+                    value={(row.data as any)[col.id]}
                     inputType={col.type === "number" ? "number" : "text"}
                     onFocusMove={({ row: r, col: c }) => {
-                      setFocusPos({ r, c: table.columns.findIndex(cc => cc.id === col.id) + c });
+                      setFocusPos({ r, c: (table.columns?.findIndex(cc => cc.id === col.id) ?? 0) + c });
                     }}
                   />
                 </div>
@@ -109,7 +122,7 @@ export function DataTable({ initialData }: DataTableProps) {
             <button
               className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
               onClick={async () => {
-                await addRow.mutateAsync({ tableId: table.id });
+                await addRow.mutateAsync({ tableId: table.id! });
                 await utils.table.getOrCreateDefaultTable.invalidate();
               }}
             >

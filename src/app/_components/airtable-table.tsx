@@ -8,23 +8,33 @@ import {
   getFilteredRowModel,
   createColumnHelper,
   flexRender,
-  SortingState,
-  ColumnFiltersState,
+  type SortingState,
+  type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { api } from "~/trpc/react";
 import { EditableCell } from "~/app/_components/editable-cell";
 import { BulkRowsButton } from "~/app/_components/bulk-rows-button";
 import { ColumnDropdown } from "~/app/_components/column-dropdown";
 
-type ColumnMeta = { id: string; name: string; type: string };
+type ColumnMeta = { 
+  id: string; 
+  name: string; 
+  type: string; 
+  createdAt: Date; 
+  updatedAt: Date; 
+  tableId: string; 
+};
 
 type TableData = {
   id?: string;
   name?: string;
   columns?: ColumnMeta[];
-  rows?: Array<{
+  rows: Array<{
     id: string;
-    data: Record<string, unknown>;
+    createdAt: Date;
+    updatedAt: Date;
+    tableId: string;
+    data: any;
   }>;
 };
 
@@ -59,7 +69,7 @@ const getFieldIcon = (type: string) => {
 
 export function AirtableTable({ initialData }: AirtableTableProps) {
   const { data: table } = api.table.getOrCreateDefaultTable.useQuery(undefined, {
-    initialData,
+    initialData: initialData as any,
     refetchOnWindowFocus: false,
   });
 
@@ -109,7 +119,7 @@ export function AirtableTable({ initialData }: AirtableTableProps) {
         ),
         cell: ({ getValue, row, column }) => (
           <EditableCell
-            tableId={table.id}
+            tableId={table.id!}
             rowIndex={row.index}
             columnId={col.id}
             value={getValue() as any}
@@ -122,39 +132,37 @@ export function AirtableTable({ initialData }: AirtableTableProps) {
     );
 
     // Add the "Add Column" button as the last column
-    dataColumns.push(
-      columnHelper.display({
-        id: "add-column",
-        header: () => (
-          <button
-            className="w-full h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded"
-            onClick={async () => {
-              const name = `Field ${(table?.columns?.length ?? 0) + 1}`;
-              await addColumn.mutateAsync({ 
-                tableId: table.id, 
-                columnName: name, 
-                columnType: "text" 
-              });
-              await utils.table.getOrCreateDefaultTable.invalidate();
-            }}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-          </button>
-        ),
-        cell: () => null,
-        enableSorting: false,
-        enableColumnFilter: false,
-      })
-    );
+    const addColumnDef = columnHelper.display({
+      id: "add-column",
+      header: () => (
+        <button
+          className="w-full h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded"
+          onClick={async () => {
+            const name = `Field ${(table?.columns?.length ?? 0) + 1}`;
+            await addColumn.mutateAsync({ 
+              tableId: table.id!, 
+              columnName: name, 
+              columnType: "text" 
+            });
+            await utils.table.getOrCreateDefaultTable.invalidate();
+          }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </button>
+      ),
+      cell: () => null,
+      enableSorting: false,
+      enableColumnFilter: false,
+    });
 
-    return dataColumns;
+    return [...dataColumns, addColumnDef];
   }, [table, addColumn, utils]);
 
   const data = useMemo(() => {
     if (!table?.rows || !Array.isArray(table.rows)) return [];
-    return table.rows.map(row => row.data);
+    return table.rows.map(row => row.data as Record<string, unknown>);
   }, [table?.rows]);
 
   const tableInstance = useReactTable({
@@ -229,10 +237,10 @@ export function AirtableTable({ initialData }: AirtableTableProps) {
           <div className="w-12 flex items-center justify-center border-r border-gray-200 bg-gray-50">
             <button
               className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
-              onClick={async () => {
-                await addRow.mutateAsync({ tableId: table.id });
-                await utils.table.getOrCreateDefaultTable.invalidate();
-              }}
+                  onClick={async () => {
+                    await addRow.mutateAsync({ tableId: table.id! });
+                    await utils.table.getOrCreateDefaultTable.invalidate();
+                  }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -253,7 +261,7 @@ export function AirtableTable({ initialData }: AirtableTableProps) {
             <span className="text-sm text-gray-600">
               {table.rows?.length ?? 0} records
             </span>
-            <BulkRowsButton tableId={table.id} />
+                <BulkRowsButton tableId={table.id!} />
           </div>
         </div>
       </div>
