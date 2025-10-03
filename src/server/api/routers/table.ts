@@ -216,6 +216,8 @@ export const tableRouter = createTRPCRouter({
       if (rows.length === 0) throw new Error("Row not found");
 
       const row = rows[0];
+      if (!row) throw new Error("Row not found");
+      
       const updatedData = {
         ...(row.data as Record<string, unknown>),
         [input.columnId]: input.value,
@@ -223,7 +225,7 @@ export const tableRouter = createTRPCRouter({
 
       await db.row.update({
         where: { id: row.id },
-        data: { data: updatedData },
+        data: { data: updatedData as any },
       });
 
       // Return the updated table with limited rows
@@ -279,7 +281,7 @@ export const tableRouter = createTRPCRouter({
         };
         await db.row.update({
           where: { id: row.id },
-          data: { data: updatedData },
+          data: { data: updatedData as any },
         });
       }
 
@@ -325,7 +327,7 @@ export const tableRouter = createTRPCRouter({
       await db.row.create({
         data: {
           tableId: input.tableId,
-          data: emptyRow,
+          data: emptyRow as any,
         },
       });
 
@@ -381,7 +383,7 @@ export const tableRouter = createTRPCRouter({
 
       // Use createMany for better performance
       await db.row.createMany({
-        data: bulkRows,
+        data: bulkRows.map(row => ({ ...row, data: row.data as any })),
       });
 
       const updated = await db.table.findUnique({
